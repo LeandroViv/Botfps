@@ -1,5 +1,5 @@
 - name: Exponer puerto con Localtunnel
-        run: |
+        run: 
           # Instalar localtunnel (requiere Node.js que ya viene en ubuntu-latest)
           npm install -g localtunnel
           
