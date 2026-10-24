@@ -19,13 +19,21 @@ jobs:
           sleep 10
           ollama pull phi3
 
-      - name: Exponer puerto con Localtunnel
+      - name: Exponer puerto con Ngrok
+        env:
+          NGROK_AUTHTOKEN: ${{ secrets.NGROK_AUTHTOKEN }}
         run: |
-          npx --yes localtunnel --port 11434 > localtunnel.log 2>&1 &
-          echo "Esperando URL de Localtunnel..."
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+          sudo apt update && sudo apt install ngrok
+          ngrok authtoken $NGROK_AUTHTOKEN
+          ngrok http 11434 --log=stdout &
+          
+          echo "Esperando URL de Ngrok..."
           sleep 6
           echo "=========================================="
           echo "COPIÁ LA URL DE ABAJO PARA TU BOT EN FPS.MS:"
-          cat localtunnel.log
+          curl -s http://localhost:4040/api/tunnels | grep -o 'https://[-0-9a-z]*\.ngrok-free.app'
           echo "=========================================="
+          
           sleep infinity
