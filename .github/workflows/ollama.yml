@@ -21,8 +21,7 @@ jobs:
 
       - name: Exponer puerto con Localtunnel
         run: |
-          npm install -g localtunnel
-          lt --port 11434 > localtunnel.log 2>&1 &
+          npx --yes localtunnel --port 11434 > localtunnel.log 2>&1 &
           echo "Esperando URL de Localtunnel..."
           sleep 6
           echo "=========================================="
