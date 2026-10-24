@@ -1,18 +1,32 @@
-- name: Exponer puerto con Localtunnel
-        run: 
-          # Instalar localtunnel (requiere Node.js que ya viene en ubuntu-latest)
+name: Ollama Service
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-ollama:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Instalar Ollama
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Iniciar Ollama y descargar modelo
+        run: |
+          ollama serve &
+          sleep 10
+          ollama pull phi3
+
+      - name: Exponer puerto con Localtunnel
+        run: |
           npm install -g localtunnel
-          
-          # Lanzar el túnel en segundo plano
           lt --port 11434 > localtunnel.log 2>&1 &
-          
-          # Esperar a que genere la URL y mostrarla en pantalla
           echo "Esperando URL de Localtunnel..."
           sleep 6
           echo "=========================================="
           echo "COPIÁ LA URL DE ABAJO PARA TU BOT EN FPS.MS:"
           cat localtunnel.log
           echo "=========================================="
-          
-          # Mantener el workflow vivo
           sleep infinity
