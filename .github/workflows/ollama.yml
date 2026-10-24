@@ -1,27 +1,19 @@
-name: Ollama Service
-
-on:
-  workflow_dispatch:
-
-jobs:
-  run-ollama:
-    runs-on: ubuntu-latest
-    timeout-minutes: 360 # Permite que el runner corra el mayor tiempo posible
-
-    steps:
-      - name: Instalar Ollama
+- name: Exponer puerto con Cloudflare Tunnel
         run: |
-          curl -fsSL https://ollama.com/install.sh | sh
-
-      - name: Iniciar Ollama y descargar modelo
-        run: |
-          ollama serve &
-          sleep 10
-          ollama pull phi3
-
-      - name: Exponer puerto con Pinggy (Túnel público)
-        run: |
+          # Descargar cloudflared
+          curl -L --output cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x cloudflared
+          
+          # Lanzar el túnel en segundo plano y guardar el log
+          ./cloudflared tunnel --url http://localhost:11434 > cloudflare.log 2>&1 &
+          
+          # Esperar a que genere la URL y mostrarla en pantalla
+          echo "Esperando URL de Cloudflare..."
+          sleep 8
           echo "=========================================="
           echo "COPIÁ LA URL DE ABAJO PARA TU .ENV EN FPS.MS:"
+          grep -o 'https://[-0-9a-z]*\.trycloudflare\.com' cloudflare.log
           echo "=========================================="
-          ssh -o StrictHostKeyChecking=no -R 80:localhost:11434 a.pinggy.io
+          
+          # Mantener el workflow vivo
+          sleep infinity
