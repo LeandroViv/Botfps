@@ -1,65 +1,33 @@
-import os
-import logging
-import requests
-from dotenv import load_dotenv
-from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
+name: Ollama Service
 
-load_dotenv()
+on:
+  workflow_dispatch:
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-logger = logging.getLogger(__name__)
+jobs:
+  run-ollama:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
 
-BOT_TOKEN = "8777596472:AAF8rBJw0ACEyaqxsGk_rPR__arNXOqPKss"
-OLLAMA_URL = "https://TU-URL-DE-SERVEO.serveo.net"  # Reemplazá esto por la URL que te tire el workflow nuevo
-MODEL_NAME = "phi3"
+    steps:
+      - name: Instalar Ollama
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    await update.message.reply_text(
-        f"¡Hola {user.first_name}! 🤖 Soy tu bot conectado a Ollama en la nube. Escribime cualquier pregunta para empezar."
-    )
+      - name: Iniciar Ollama y descargar modelo
+        run: |
+          ollama serve &
+          sleep 15
+          ollama pull phi3
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_text = update.message.text
-    
-    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
-
-    payload = {
-        "model": MODEL_NAME,
-        "prompt": user_text,
-        "stream": False
-    }
-
-    try:
-        response = requests.post(
-            f"{OLLAMA_URL}/api/generate", 
-            json=payload, 
-            timeout=120
-        )
-        response.raise_for_status()
-        data = response.json()
-        respuesta_texto = data.get("response", "No obtuve respuesta de la IA.")
-    except Exception as e:
-        respuesta_texto = f"Error al conectar con el servidor de Ollama: {e}"
-
-    await update.message.reply_text(respuesta_texto)
-
-def main():
-    if not BOT_TOKEN:
-        logger.error("¡Falta configurar el BOT_TOKEN!")
-        return
-
-    print("Bot is running...")
-    
-    application = ApplicationBuilder().token(BOT_TOKEN).build()
-
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
-
-    application.run_polling()
-
-if __name__ == "__main__":
-    main()
+      - name: Exponer puerto con Pinggy
+        run: |
+          ssh -p 443 -o StrictHostKeyChecking=no -R 0:localhost:11434 a.pinggy.io > pinggy.log 2>&1 &
+          
+          echo "Esperando URL de Pinggy..."
+          sleep 8
+          echo "=========================================="
+          echo "COPIÁ LA URL DE ABAJO PARA TU BOT EN FPS.MS:"
+          cat pinggy.log | grep -o 'https://[-0-9a-z]*\.pinggy.link' || true
+          echo "=========================================="
+          
+          sleep infinity
