@@ -19,21 +19,15 @@ jobs:
           sleep 10
           ollama pull phi3
 
-      - name: Exponer puerto con Ngrok
-        env:
-          NGROK_AUTHTOKEN: ${{ secrets.NGROK_AUTHTOKEN }}
+      - name: Exponer puerto con Serveo
         run: |
-          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
-          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-          sudo apt update && sudo apt install ngrok
-          ngrok authtoken $NGROK_AUTHTOKEN
-          ngrok http 11434 --log=stdout &
+          ssh -o StrictHostKeyChecking=no -R 80:localhost:11434 serveo.net > serveo.log 2>&1 &
           
-          echo "Esperando URL de Ngrok..."
+          echo "Esperando URL de Serveo..."
           sleep 6
           echo "=========================================="
           echo "COPIÁ LA URL DE ABAJO PARA TU BOT EN FPS.MS:"
-          curl -s http://localhost:4040/api/tunnels | grep -o 'https://[^"]*ngrok[^"]*' || true
+          cat serveo.log | grep -o 'https://[-0-9a-z]*\.serveo.net' || true
           echo "=========================================="
           
           sleep infinity
