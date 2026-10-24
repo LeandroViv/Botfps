@@ -1,33 +1,18 @@
-name: Ollama Service
-
-on:
-  workflow_dispatch:
-
-jobs:
-  run-ollama:
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-
-    steps:
-      - name: Instalar Ollama
+- name: Exponer puerto con Localtunnel
         run: |
-          curl -fsSL https://ollama.com/install.sh | sh
-
-      - name: Iniciar Ollama y descargar modelo
-        run: |
-          ollama serve &
-          sleep 10
-          ollama pull phi3
-
-      - name: Exponer puerto con Cloudflare Tunnel
-        run: |
-          curl -L --output cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-          chmod +x cloudflared
-          ./cloudflared tunnel --url http://localhost:11434 > cloudflare.log 2>&1 &
-          echo "Esperando URL de Cloudflare..."
-          sleep 8
+          # Instalar localtunnel (requiere Node.js que ya viene en ubuntu-latest)
+          npm install -g localtunnel
+          
+          # Lanzar el túnel en segundo plano
+          lt --port 11434 > localtunnel.log 2>&1 &
+          
+          # Esperar a que genere la URL y mostrarla en pantalla
+          echo "Esperando URL de Localtunnel..."
+          sleep 6
           echo "=========================================="
-          echo "COPIÁ LA URL DE ABAJO PARA TU .ENV EN FPS.MS:"
-          grep -o 'https://[-0-9a-z]*\.trycloudflare\.com' cloudflare.log
+          echo "COPIÁ LA URL DE ABAJO PARA TU BOT EN FPS.MS:"
+          cat localtunnel.log
           echo "=========================================="
+          
+          # Mantener el workflow vivo
           sleep infinity
