@@ -1,0 +1,27 @@
+name: Ollama Service
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-ollama:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360 # Permite que el runner corra el mayor tiempo posible
+
+    steps:
+      - name: Instalar Ollama
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Iniciar Ollama y descargar modelo
+        run: |
+          ollama serve &
+          sleep 10
+          ollama pull phi3
+
+      - name: Exponer puerto con Pinggy (Túnel público)
+        run: |
+          echo "=========================================="
+          echo "COPIÁ LA URL DE ABAJO PARA TU .ENV EN FPS.MS:"
+          echo "=========================================="
+          ssh -o StrictHostKeyChecking=no -R 80:localhost:11434 a.pinggy.io
